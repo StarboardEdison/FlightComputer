@@ -60,3 +60,17 @@ The main data file records the following metrics in a comma-separated format: Ti
 
 
 A secondary apogee log file records the maximum detected altitude once the rocket reaches apogee, detects a negative velocity, and begins descending.
+
+***
+
+## Optimization
+
+To ensure real-time performance and prevent mid-flight hardware crashes, this flight computer software was heavily optimized before deployment. We focused on reducing cycle times and managing the strict memory limits of the microcontroller.
+
+**Efficient Algorithms (Compute Time Reduction)**
+The original apogee prediction algorithm utilized a while loop to numerically integrate the remaining flight path using 100ms simulated time steps. This created a variable execution time that scaled with altitude, risking loop overruns and delayed sensor readings. We replaced this O(n) simulation with a closed-form kinematic approximation that runs in O(1) time. This ensures the main control loop always executes well within the 50ms hardware delay limit, resulting in a much more responsive airbrake deployment and perfectly consistent polling rates.
+
+**Reduce Memory Usage (SRAM Optimization)**
+Microcontrollers have extremely limited RAM, making memory fragmentation fatal during a launch. We reduced dynamic memory allocation by wrapping all static string literals in our SD logging functions with the F macro, forcing them to be stored in Flash memory instead of the precious SRAM. We also optimized our data structures by strictly defining variable scopes and removing redundant global arrays, which reduced our overall memory footprint, avoided memory leaks, and yielded a noticeably smaller compiled bundle size.
+
+***
